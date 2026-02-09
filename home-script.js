@@ -8,7 +8,7 @@ let currentUser = null;
 //  NAVIGATION FUNCTIONS
 // ═══════════════════════════════════════════════
 window.goToGame = function() {
-  window.location.href = 'Game-index.html';
+  window.location.href = 'game-index.html';
 };
 
 window.openHTP = function() {
@@ -42,31 +42,33 @@ async function renderLeaderboard() {
   const tbody = document.getElementById('lb-body');
   tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">Loading...</td></tr>';
   
-  // Simulate loading delay
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  const scores = DB.leaderboard.getTop(10);
-  
-  tbody.innerHTML = '';
-  
-  if (!scores.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">No scores yet — play the game!</td></tr>';
-    return;
-  }
-  
-  scores.forEach((score, i) => {
-    const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
-    const diffClass = score.difficulty || 'easy';
+  try {
+    const scores = await DB.leaderboard.getTop(10);
     
-    tbody.innerHTML += `
-      <tr>
-        <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
-        <td>${escHtml(score.name)}</td>
-        <td style="font-size:.64rem">${escHtml(score.strand || 'N/A')}</td>
-        <td><span class="lb-diff ${diffClass}">${(score.difficulty || 'easy').toUpperCase()}</span> · ${score.lines || 0}L</td>
-        <td>${score.score}</td>
-      </tr>`;
-  });
+    tbody.innerHTML = '';
+    
+    if (!scores || !scores.length) {
+      tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">No scores yet — play the game!</td></tr>';
+      return;
+    }
+    
+    scores.forEach((score, i) => {
+      const rankClass = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : '';
+      const diffClass = score.difficulty || 'easy';
+      
+      tbody.innerHTML += `
+        <tr>
+          <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
+          <td>${escHtml(score.name)}</td>
+          <td style="font-size:.64rem">${escHtml(score.strand || 'N/A')}</td>
+          <td><span class="lb-diff ${diffClass}">${(score.difficulty || 'easy').toUpperCase()}</span> · ${score.lines || 0}L</td>
+          <td>${score.score}</td>
+        </tr>`;
+    });
+  } catch (error) {
+    console.error('Failed to load leaderboard:', error);
+    tbody.innerHTML = '<tr><td colspan="5" class="lb-empty">Failed to load leaderboard</td></tr>';
+  }
 }
 
 function escHtml(s) {
@@ -228,26 +230,41 @@ function initCanvas(canvasId) {
 window.addEventListener('DOMContentLoaded', async () => {
   // Check authentication
   const session = DB.session.get();
+  console.log('Session found:', session);
+  
   if (!session) {
+    console.log('No session found, redirecting to login');
     // Not logged in, redirect to login
     window.location.href = 'Login.html';
     return;
   }
   
-  const user = DB.users.findByEmail(session.email);
-  if (!user) {
-    // User not found, clear session and redirect
+  try {
+    const user = await DB.users.getCurrentUser();
+    console.log('User retrieved:', user);
+    
+    if (!user) {
+      console.log('User not found, clearing session');
+      // User not found, clear session and redirect
+      DB.session.clear();
+      window.location.href = 'Login.html';
+      return;
+    }
+    
+    // Set current user
+    currentUser = user;
+    
+    // Hide loading overlay
+    document.getElementById('loading-overlay').classList.add('hidden');
+    
+    // Update welcome message
+    document.getElementById('home-welcome').textContent = `Welcome, ${currentUser.name}!`;
+    
+    // Initialize canvas animation
+    initCanvas('home-canvas');
+  } catch (error) {
+    console.error('Session validation failed:', error);
     DB.session.clear();
     window.location.href = 'Login.html';
-    return;
   }
-  
-  // Set current user
-  currentUser = user;
-  
-  // Update welcome message
-  document.getElementById('home-welcome').textContent = `Welcome, ${currentUser.name}!`;
-  
-  // Initialize canvas animation
-  initCanvas('home-canvas');
 });

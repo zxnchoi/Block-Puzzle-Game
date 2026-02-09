@@ -4,11 +4,17 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Block Puzzle Game</title>
-<link rel="stylesheet" href="Game-style.css">
+<link rel="stylesheet" href="game-style.css">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="grid-bg"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading...</div>
+</div>
 
 <!-- GAME SCREEN -->
 <div class="screen active" id="game-screen">
@@ -93,6 +99,6 @@
 </div>
 
 <script src="Database.js"></script>
-<script src="Game-script.js"></script>
+<script src="game-script.js"></script>
 </body>
 </html>

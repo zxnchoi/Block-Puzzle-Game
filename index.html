@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" ondragstart="return false" oncontextmenu="return false">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Block Puzzle Game </title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="grid-bg"></div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading...</div>
+</div>
+
+<!-- HOME SCREEN -->
+<div class="screen active" id="home-screen">
+  <canvas id="home-canvas"></canvas>
+  <div class="home-content">
+    <div class="home-title">
+      <span class="t1">Block Puzzle</span>
+      <span class="t2">Game</span>
+    </div>
+    <div class="home-welcome" id="home-welcome">Welcome, Player!</div>
+    <div class="home-tagline">Clear lines · Answer questions · Survive</div>
+    <div class="home-nav">
+      <button class="nav-btn" onclick="goToGame()">▶ &nbsp;Start Game</button>
+      <button class="nav-btn pink" onclick="openHTP()">⧉ &nbsp;How to Play</button>
+      <button class="nav-btn green" onclick="goToLeaderboard()">⬆ &nbsp;Leaderboard</button>
+      <button class="nav-btn red" onclick="logout()">⏏ &nbsp;Logout</button>
+    </div>
+  </div>
+  <div class="home-deco">© 2026 Block Puzzle — Test your mind</div>
+</div>
+
+<!-- HOW TO PLAY MODAL -->
+<div class="modal-overlay" id="htp-overlay">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeHTP()">✕</button>
+    <div class="modal-title">How to Play</div>
+
+    <div class="htp-section">
+      <div class="htp-section-title">Objective</div>
+      <div class="htp-text">Stack falling Blocks to complete full rows. Every time you clear a line, a quiz question appears. Answer correctly to keep playing — one wrong answer and it's <span style="color:var(--neon-pink)">Game Over</span>.</div>
+    </div>
+    <div class="htp-section">
+      <div class="htp-section-title">Controls</div>
+      <div class="key-grid">
+        <div class="key-row"><span class="key-badge">← →</span><span class="key-label">Move left / right</span></div>
+        <div class="key-row"><span class="key-badge">↑</span><span class="key-label">Rotate piece</span></div>
+        <div class="key-row"><span class="key-badge">↓</span><span class="key-label">Soft drop</span></div>
+        <div class="key-row"><span class="key-badge">Space</span><span class="key-label">Hard drop</span></div>
+      </div>
+    </div>
+    <div class="htp-section">
+      <div class="htp-section-title">Difficulty & Timer</div>
+      <div class="htp-text" style="margin-bottom:10px">Questions get harder as you answer more. Each difficulty has its own time limit:</div>
+      <table class="diff-table">
+        <thead><tr><th>Difficulty</th><th>Triggers After</th><th>Timer</th></tr></thead>
+        <tbody>
+          <tr><td><span class="badge-easy">● EASY</span></td><td>Start of game</td><td>10 seconds</td></tr>
+          <tr><td><span class="badge-med">● MEDIUM</span></td><td>3 correct answers</td><td>15 seconds</td></tr>
+          <tr><td><span class="badge-hard">● HARD</span></td><td>6 correct answers</td><td>25 seconds</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="htp-section">
+      <div class="htp-section-title">Scoring</div>
+      <div class="htp-text">1 line = 100 pts · 2 lines = 300 pts · 3 lines = 500 pts · 4 lines = 800 pts (×level). Correct quiz answers award a bonus of 50 points. Hard drops give 2 pts per row fallen.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LEADERBOARD SCREEN -->
+<div class="modal-overlay" id="lb-overlay">
+  <div class="modal-box lb-box">
+    <button class="modal-close" onclick="closeLeaderboard()">✕</button>
+    <div class="lb-content">
+      <div class="lb-header">
+        <div class="lb-title">Leaderboard</div>
+        <div class="lb-sub">Top 10 Scores</div>
+      </div>
+      <table class="lb-table" id="lb-table">
+        <thead><tr><th>#</th><th>Player</th><th>Strand</th><th>Reached</th><th>Score</th></tr></thead>
+        <tbody id="lb-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="Database.js"></script>
+<script src="home-script.js"></script>
+</body>
+</html>

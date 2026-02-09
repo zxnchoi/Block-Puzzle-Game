@@ -2,12 +2,10 @@
 //  LOGIN SCRIPT
 // ═══════════════════════════════════════════════
 
-// Tab switching
 window.switchTab = function(tab) {
   document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
   
-  // Clear errors
   document.querySelectorAll('.form-error, .form-success').forEach(e => e.classList.remove('show'));
   
   if (tab === 'login') {
@@ -19,85 +17,113 @@ window.switchTab = function(tab) {
   }
 };
 
-// Login handler
 window.handleLogin = async function(e) {
   e.preventDefault();
   
-  const email = document.getElementById('login-email').value.trim();
+  const username = document.getElementById('login-username').value.trim();
+  const password = document.getElementById('login-password').value;
   const btn = document.getElementById('login-btn');
+  
+  if (!username) {
+    showError('login-error', 'Please enter your username');
+    return;
+  }
+  
+  if (!password) {
+    showError('login-error', 'Please enter your password');
+    return;
+  }
   
   btn.disabled = true;
   btn.textContent = 'LOGGING IN...';
   
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const user = DB.users.findByEmail(email);
-  
-  if (!user) {
-    showError('login-error', 'Account not found. Please sign up first.');
+  try {
+    const result = await DB.users.login(username, password);
+    
+    DB.session.set({
+      user_id: result.user.id,
+      username: result.user.username,
+      session_token: result.user.session_token
+    });
+    
+    btn.textContent = 'SUCCESS!';
+    setTimeout(() => {
+      btn.textContent = 'LOGIN';
+      btn.disabled = false;
+      window.location.href = 'index.html';
+    }, 300);
+  } catch (error) {
+    showError('login-error', error.message || 'Login failed. Please try again.');
     btn.disabled = false;
     btn.textContent = 'LOGIN';
-    return;
   }
-  
-  // Set session
-  DB.session.set(user);
-  
-  btn.textContent = 'SUCCESS!';
-  setTimeout(() => {
-    btn.textContent = 'LOGIN';
-    btn.disabled = false;
-    // Redirect to home page
-    window.location.href = 'Home-index.html';
-  }, 300);
 };
 
-// Signup handler
 window.handleSignup = async function(e) {
   e.preventDefault();
   
+  const username = document.getElementById('signup-username').value.trim();
   const name = document.getElementById('signup-name').value.trim();
   const strand = document.getElementById('signup-strand').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
+  const password = document.getElementById('signup-password').value;
   const btn = document.getElementById('signup-btn');
   
-  if (!email.endsWith('@gmail.com')) {
-    showError('signup-error', 'Please use a Gmail account (@gmail.com)');
+  if (!username || !name || !strand || !password) {
+    showError('signup-error', 'Please fill in all fields');
+    return;
+  }
+  
+  if (!/^[a-zA-Z0-9_]{3,20}$/.test(username)) {
+    showError('signup-error', 'Username must be 3-20 characters and contain only letters, numbers, and underscores');
+    return;
+  }
+  
+  if (password.length < 6) {
+    showError('signup-error', 'Password must be at least 6 characters');
     return;
   }
   
   btn.disabled = true;
   btn.textContent = 'CREATING ACCOUNT...';
   
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 800));
-  
-  if (DB.users.findByEmail(email)) {
-    showError('signup-error', 'This email is already registered. Please login.');
+  try {
+    const result = await DB.users.create({ username, name, strand, password });
+    
+    DB.session.set({
+      user_id: result.user.id,
+      username: result.user.username,
+      session_token: result.user.session_token
+    });
+    
+    showSuccess('signup-success', 'Account created successfully! Your account has been created.');
+    btn.textContent = 'SUCCESS!';
+    
+    // Auto-login after signup
+    setTimeout(async () => {
+      btn.textContent = 'LOGGING IN...';
+      try {
+        const result = await DB.users.login(username, password);
+        DB.session.set({
+          user_id: result.user.id,
+          username: result.user.username,
+          session_token: result.user.session_token
+        });
+        window.location.href = 'index.html';
+      } catch (error) {
+        // If auto-login fails, redirect to login
+        btn.textContent = 'CREATE ACCOUNT';
+        btn.disabled = false;
+        switchTab('login');
+        showError('login-error', 'Signup successful! Please login with your new account.');
+      }
+    }, 1000);
+  } catch (error) {
+    showError('signup-error', error.message || 'Signup failed. Please try again.');
     btn.disabled = false;
     btn.textContent = 'CREATE ACCOUNT';
-    return;
   }
-  
-  // Create user
-  const newUser = DB.users.create({ name, strand, email });
-  
-  // Set session
-  DB.session.set(newUser);
-  
-  showSuccess('signup-success', 'Account created successfully!');
-  btn.textContent = 'SUCCESS!';
-  
-  setTimeout(() => {
-    btn.textContent = 'CREATE ACCOUNT';
-    btn.disabled = false;
-    // Redirect to home page
-    window.location.href = 'Home-index.html';
-  }, 800);
 };
 
-// Helper functions
 function showError(id, msg) {
   const el = document.getElementById(id);
   el.textContent = msg;
@@ -185,23 +211,28 @@ function initCanvas(canvasId) {
 window.addEventListener('DOMContentLoaded', async () => {
   const loadingOverlay = document.getElementById('loading-overlay');
   
-  // Initialize canvas animation
   initCanvas('auth-canvas');
   
-  // Simulate database connection
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  try {
+    await DB.init();
+  } catch (e) {
+    console.warn('Database initialization warning:', e);
+  }
   
-  // Check if already logged in
   const session = DB.session.get();
   if (session) {
-    const user = DB.users.findByEmail(session.email);
-    if (user) {
-      // User already logged in, redirect to home
-      window.location.href = 'Home-index.html';
-      return;
+    try {
+      const valid = await DB.session.validate();
+      if (valid) {
+        window.location.href = 'index.html';
+        return;
+      } else {
+        DB.session.clear();
+      }
+    } catch (e) {
+      DB.session.clear();
     }
   }
   
-  // Show login screen
   loadingOverlay.classList.add('hidden');
 });
