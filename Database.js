@@ -1,8 +1,8 @@
 // ═══════════════════════════════════════════════
-//  REAL DATABASE (PHP/MySQL API Client)!!
+//  REAL DATABASE (PHP/MySQL API Client)
 // ═══════════════════════════════════════════════
 
-// Configure your API base URL here!!
+// Configure your API base URL here
 const API_BASE_URL = 'api';
 
 // Helper function for API calls
@@ -41,7 +41,7 @@ async function apiCall(endpoint, options = {}) {
     }
 }
 
-// Database API!!
+// Database API
 const DB = {
     // Initialize database connection check
     async init() {
