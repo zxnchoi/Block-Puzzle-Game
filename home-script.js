@@ -28,11 +28,21 @@ window.closeLeaderboard = function() {
   document.getElementById('lb-overlay').classList.remove('active');
 };
 
+window.openLogoutConfirm = function() {
+  document.getElementById('logout-overlay').classList.add('active');
+};
+
+window.closeLogoutConfirm = function() {
+  document.getElementById('logout-overlay').classList.remove('active');
+};
+
+window.confirmLogout = function() {
+  DB.session.clear();
+  window.location.href = 'Login.html';
+};
+
 window.logout = function() {
-  if (confirm('Are you sure you want to logout?')) {
-    DB.session.clear();
-    window.location.href = 'Login.html';
-  }
+  openLogoutConfirm();
 };
 
 // ═══════════════════════════════════════════════
@@ -61,7 +71,7 @@ async function renderLeaderboard() {
           <td><span class="lb-rank ${rankClass}">${i + 1}</span></td>
           <td>${escHtml(score.name)}</td>
           <td style="font-size:.64rem">${escHtml(score.strand || 'N/A')}</td>
-          <td><span class="lb-diff ${diffClass}">${(score.difficulty || 'easy').toUpperCase()}</span> · ${score.lines || 0}L</td>
+          <td><span class="lb-diff ${diffClass}">${(score.difficulty || 'easy').toUpperCase()}</span> · Lv.${score.level || 1} · ${score.lines || 0}L</td>
           <td>${score.score}</td>
         </tr>`;
     });

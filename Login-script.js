@@ -78,6 +78,11 @@ window.handleSignup = async function(e) {
     return;
   }
   
+  if (!/^[a-zA-Z. ]+$/.test(name)) {
+    showError('signup-error', 'Full name can only contain letters, spaces, and periods');
+    return;
+  }
+  
   if (password.length < 6) {
     showError('signup-error', 'Password must be at least 6 characters');
     return;

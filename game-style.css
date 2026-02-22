@@ -234,6 +234,53 @@ body{background:var(--bg-deep);font-family:'Share Tech Mono',monospace;color:#cc
 .quiz-result.show{opacity:1}
 .quiz-result.wrong-result{color:var(--neon-pink)}
 
+/* Modal Styles for Home Confirmation */
+.modal-overlay{
+  position:fixed;inset:0;z-index:200;
+  background:rgba(5,5,15,.88);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .28s
+}
+.modal-overlay.active{opacity:1;pointer-events:auto}
+.home-modal{
+  background:#111128;border:1px solid rgba(0,240,255,.28);
+  border-radius:16px;width:360px;max-width:92vw;padding:32px 28px 26px;
+  box-shadow:0 0 50px rgba(0,240,255,.1),0 12px 50px rgba(0,0,0,.5);
+  animation:modalPop .24s cubic-bezier(.18,.89,.32,1.28) both;
+  position:relative;text-align:center
+}
+@keyframes modalPop{
+  from{transform:scale(.88) translateY(20px);opacity:0}
+  to{transform:scale(1) translateY(0);opacity:1}
+}
+.home-modal .modal-title{
+  font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:900;
+  color:var(--neon-cyan);letter-spacing:4px;text-transform:uppercase;
+  text-shadow:0 0 10px var(--neon-cyan);margin-bottom:16px
+}
+.home-modal .modal-actions{
+  display:flex;gap:12px;justify-content:center;margin-top:24px
+}
+.home-modal .nav-btn{
+  min-width:auto;padding:12px 24px;font-size:.68rem;letter-spacing:3px;
+  font-family:'Orbitron',sans-serif;border-radius:30px;cursor:pointer;
+  text-transform:uppercase;transition:all .3s;
+  background:transparent;border:1px solid rgba(0,240,255,.25);color:var(--neon-cyan)
+}
+.home-modal .nav-btn:hover{
+  border-color:var(--neon-cyan);
+  box-shadow:0 0 24px rgba(0,240,255,.35),inset 0 0 24px rgba(0,240,255,.06);
+  color:#fff
+}
+.home-modal .nav-btn.red{
+  border-color:rgba(255,0,64,.25);color:var(--neon-red)
+}
+.home-modal .nav-btn.red:hover{
+  border-color:var(--neon-red);
+  box-shadow:0 0 24px rgba(255,0,64,.35),inset 0 0 24px rgba(255,0,64,.06);
+  color:#fff
+}
+
 .board-wrap.flash{animation:boardFlash .3s}
 @keyframes boardFlash{
   0%{box-shadow:0 0 30px rgba(0,240,255,.08),0 0 60px rgba(0,240,255,.3)}

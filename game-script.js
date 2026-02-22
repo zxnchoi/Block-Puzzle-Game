@@ -1,98 +1,11 @@
 // ═══════════════════════════════════════════════
-//  GAME!!!
+//  GAME SCRIPT
 // ═══════════════════════════════════════════════
-
-// ═══════════════════════════════════════════════
-//  SOUND!!!
-// ═══════════════════════════════════════════════════
-const SoundManager = {
-  sounds: {},
-  musicVolume: 0.3,
-  sfxVolume: 0.5,
-  bgMusic: null,
-  musicPlaying: false,
-  
-  init() {
-    // Preload all sound effects
-    this.sounds = {
-      move: new Audio('sounds/move.mp3'),
-      rotate: new Audio('sounds/rotate.mp3'),
-      drop: new Audio('sounds/drop.mp3'),
-      lock: new Audio('sounds/lock.mp3'),
-      lineClear: new Audio('sounds/line_clear.wav'),
-      gameOver: new Audio('sounds/gameover.wav'),
-      correct: new Audio('sounds/correct.wav'),
-      wrong: new Audio('sounds/wrong.wav'),
-      timeUp: new Audio('sounds/timeup.mp3')
-    };
-    
-    // Set volumes
-    Object.values(this.sounds).forEach(sound => {
-      sound.volume = this.sfxVolume;
-    });
-    
-    // Setup background music
-    this.bgMusic = new Audio('sounds/background.mp3');
-    this.bgMusic.volume = this.musicVolume;
-    this.bgMusic.loop = true;
-    
-    console.log('Sound manager initialized');
-  },
-  
-  playMove() { this.playSound('move'); },
-  playRotate() { this.playSound('rotate'); },
-  playDrop() { this.playSound('drop'); },
-  playLock() { this.playSound('lock'); },
-  playLineClear() { this.playSound('lineClear'); },
-  playGameOver() { this.playSound('gameOver'); },
-  playCorrect() { this.playSound('correct'); },
-  playWrong() { this.playSound('wrong'); },
-  playTimeUp() { this.playSound('timeUp'); },
-  
-  playSound(name) {
-    const sound = this.sounds[name];
-    if (sound) {
-      sound.currentTime = 0;
-      sound.play().catch(e => console.log('Sound not available:', name));
-    }
-  },
-  
-  startMusic() {
-    if (this.bgMusic && !this.musicPlaying) {
-      this.bgMusic.play().then(() => {
-        this.musicPlaying = true;
-        console.log('Background music started');
-      }).catch(e => console.log('Background music not available'));
-    }
-  },
-  
-  stopMusic() {
-    if (this.bgMusic && this.musicPlaying) {
-      this.bgMusic.pause();
-      this.bgMusic.currentTime = 0;
-      this.musicPlaying = false;
-    }
-  },
-  
-  pauseMusic() {
-    if (this.bgMusic && this.musicPlaying) {
-      this.bgMusic.pause();
-    }
-  },
-  
-  resumeMusic() {
-    if (this.bgMusic && !this.musicPlaying) {
-      this.bgMusic.play().then(() => {
-        this.musicPlaying = true;
-      }).catch(e => {});
-    }
-  }
-};
 
 let currentUser = null;
 
 // ═══════════════════════════════════════════════
-//  QUIZ DATA!!!
+//  QUIZ DATA
 // ═══════════════════════════════════════════════
 const QUESTIONS = {
   easy: [
@@ -134,7 +47,7 @@ const QUESTIONS = {
 };
 
 // ═══════════════════════════════════════════════
-//  BLOCK PUZZLE GAME ENGINE!!!
+//  BLOCK PUZZLE ENGINE
 // ═══════════════════════════════════════════════
 const COLS = 10, ROWS = 20;
 const SHAPES = [
@@ -207,7 +120,6 @@ function lockPiece() {
         }
         board[ny][ox + c] = current.color;
       }
-  SoundManager.playLock();
   clearLines();
   current = next;
   next = randomPiece();
@@ -227,7 +139,6 @@ function clearLines() {
     }
   }
   if (cleared > 0) {
-    SoundManager.playLineClear();
     document.getElementById('board-wrap').classList.add('flash');
     setTimeout(() => document.getElementById('board-wrap').classList.remove('flash'), 300);
     const pts = [0, 100, 300, 500, 800][cleared] * level;
@@ -255,7 +166,6 @@ function getDifficultyLabel() {
   return 'hard';
 }
 
-//----TIME!!----//
 function getTimerDuration() {
   const d = getDifficultyLabel();
   return d === 'easy' ? 30
@@ -304,10 +214,10 @@ function startQuizTimer(dur) {
       clearInterval(timerInterval);
       timerInterval = null;
       disableOptions();
-      SoundManager.playTimeUp();
       document.getElementById('quiz-result').textContent = "TIME'S UP!";
       document.getElementById('quiz-result').className = 'quiz-result show wrong-result';
       setTimeout(() => {
+        closeQuiz();
         triggerGameOver("You ran out of time!");
       }, 900);
     }
@@ -336,8 +246,8 @@ function handleAnswer(chosen, correct, btn) {
     btn.classList.add('correct');
     result.textContent = '✓ CORRECT!';
     result.className = 'quiz-result show';
-    SoundManager.playCorrect();
     score += 50;
+    level++; // Increase level on correct answer
     updateUI();
     setTimeout(() => {
       closeQuiz();
@@ -347,7 +257,6 @@ function handleAnswer(chosen, correct, btn) {
     btn.classList.add('wrong');
     result.textContent = '✗ WRONG!';
     result.className = 'quiz-result show wrong-result';
-    SoundManager.playWrong();
     setTimeout(() => {
       closeQuiz();
       triggerGameOver("You answered incorrectly!");
@@ -381,11 +290,6 @@ window.startGame = function() {
   document.getElementById('start-overlay').classList.add('hidden');
   document.getElementById('gameover-overlay').classList.add('hidden');
   closeQuiz();
-  
-  // Initialize and start background music
-  SoundManager.init();
-  SoundManager.startMusic();
-  
   resumeGame();
 };
 
@@ -394,7 +298,6 @@ function pauseGame() {
     clearInterval(gameLoop);
     gameLoop = null;
   }
-  SoundManager.pauseMusic();
 }
 
 function resumeGame() {
@@ -404,14 +307,12 @@ function resumeGame() {
     if (quizActive) return;
     moveDown();
   }, speed);
-  SoundManager.resumeMusic();
 }
 
 async function triggerGameOver(reason) {
   gameOver = true;
   gameStarted = false;
   pauseGame();
-  SoundManager.stopMusic();
   if (timerInterval) {
     clearInterval(timerInterval);
     timerInterval = null;
@@ -421,7 +322,6 @@ async function triggerGameOver(reason) {
   // Save score to database
   await saveScoreToDatabase();
   
-  SoundManager.playGameOver();
   document.getElementById('go-reason').textContent = reason;
   document.getElementById('go-score').textContent = score;
   document.getElementById('go-lines').textContent = lines;
@@ -440,34 +340,23 @@ function moveDown() {
 document.addEventListener('keydown', e => {
   if (gameOver || quizActive || !gameStarted) return;
   if (e.key === 'ArrowLeft') {
-    if (!collides(current.shape, current.x - 1, current.y)) {
-      current.x--;
-      SoundManager.playMove();
-    }
+    if (!collides(current.shape, current.x - 1, current.y)) current.x--;
   } else if (e.key === 'ArrowRight') {
-    if (!collides(current.shape, current.x + 1, current.y)) {
-      current.x++;
-      SoundManager.playMove();
-    }
+    if (!collides(current.shape, current.x + 1, current.y)) current.x++;
   } else if (e.key === 'ArrowUp') {
     const rot = rotate(current.shape);
-    if (!collides(rot, current.x, current.y)) {
-      current.shape = rot;
-      SoundManager.playRotate();
-    } else if (!collides(rot, current.x - 1, current.y)) {
+    if (!collides(rot, current.x, current.y)) current.shape = rot;
+    else if (!collides(rot, current.x - 1, current.y)) {
       current.shape = rot;
       current.x--;
-      SoundManager.playRotate();
     } else if (!collides(rot, current.x + 1, current.y)) {
       current.shape = rot;
       current.x++;
-      SoundManager.playRotate();
     }
   } else if (e.key === 'ArrowDown') {
-    if (!collides(current.shape, current.x, current.y + 1)) {
+    if (!collides(current.shape, current.x, current.y + 1))
       current.y++;
-      SoundManager.playDrop();
-    } else
+    else
       lockPiece();
   } else if (e.key === ' ') {
     e.preventDefault();
@@ -483,7 +372,6 @@ function hardDrop() {
   while (!collides(current.shape, current.x, current.y + 1 + d)) d++;
   score += d * 2;
   current.y += d;
-  SoundManager.playDrop();
   lockPiece();
   render();
 }
@@ -544,13 +432,12 @@ function renderNext() {
 function updateUI() {
   document.getElementById('score').textContent = score;
   document.getElementById('lines').textContent = lines;
-  level = Math.floor(lines / 10) + 1;
   document.getElementById('level').textContent = level;
   updateDiffBadge();
 }
 
 // ═══════════════════════════════════════════════
-//  SAVE SCORE TO DATABASE!!!
+//  SAVE SCORE TO DATABASE
 // ═══════════════════════════════════════════════
 async function saveScoreToDatabase() {
   if (!currentUser) return;
@@ -582,18 +469,23 @@ async function saveScoreToDatabase() {
 }
 
 // ═══════════════════════════════════════════════
-//  NAVIGATION CODE!!!
+//  NAVIGATION
 // ═══════════════════════════════════════════════
 window.goToHome = function() {
-  if (confirm('Are you sure you want to exit the game?')) {
-    pauseGame();
-    SoundManager.stopMusic();
-    window.location.href = 'index.html';
-  }
+  document.getElementById('home-overlay').classList.add('active');
+};
+
+window.closeHomeConfirm = function() {
+  document.getElementById('home-overlay').classList.remove('active');
+};
+
+window.confirmGoToHome = function() {
+  pauseGame();
+  window.location.href = 'index.html';
 };
 
 // ═══════════════════════════════════════════════
-//  INITIALIZE ON PAGE LOAD!!!
+//  INITIALIZE ON PAGE LOAD
 // ═══════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded', async () => {
   // Check authentication

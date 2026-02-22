@@ -1,4 +1,5 @@
 # BLOCK PUZZLE GAME
+
 ## File Structure
 
 ```
@@ -12,160 +13,201 @@ Block Puzzle Game/
 ├── Game-index.html         # Game page
 ├── Game-style.css          # Game page styles
 ├── Game-script.js          # Game logic and mechanics
-├── Database.js             # Database simulation (localStorage)
+├── Database.js             # Database API client (PHP/MySQL)
+├── api/
+│   ├── config.php          # Database configuration
+│   ├── users.php           # Users API endpoints
+│   ├── leaderboard.php     # Leaderboard API endpoints
+│   └── session.php         # Session management API
 └── README.md               # This file
 ```
 
-## Database Structure (database.js)
+## Database Setup (MySQL)
 
-The database is simulated using localStorage with the following structure:
+### SQL Commands to Create Database
 
-### Users Table
-```javascript
-{
-  id: string,           // Unique user ID
-  name: string,         // Full name
-  strand: string,       // Strand/Section
-  email: string,        // Gmail address
-  createdAt: string,    // ISO timestamp
-  gamesPlayed: number,  // Total games played
-  totalScore: number,   // Sum of all scores
-  highScore: number     // Best score
-}
+Run these commands in your MySQL database (phpMyAdmin, MySQL Workbench, or command line):
+
+```sql
+-- Create the database
+CREATE DATABASE IF NOT EXISTS block_puzzle_game CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Use the database
+USE block_puzzle_game;
+
+-- ============================================
+-- USERS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    strand VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    games_played INT NOT NULL DEFAULT 0,
+    total_score INT NOT NULL DEFAULT 0,
+    high_score INT NOT NULL DEFAULT 0,
+    INDEX idx_email (email),
+    INDEX idx_high_score (high_score DESC)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- SESSIONS TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS sessions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    session_token VARCHAR(255) NOT NULL UNIQUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    expires_at DATETIME NOT NULL,
+    INDEX idx_token (session_token),
+    INDEX idx_expires (expires_at),
+    INDEX idx_user (user_id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- LEADERBOARD TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS leaderboard (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    strand VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    score INT NOT NULL DEFAULT 0,
+    lines INT NOT NULL DEFAULT 0,
+    level INT NOT NULL DEFAULT 1,
+    difficulty ENUM('easy', 'medium', 'hard') NOT NULL DEFAULT 'easy',
+    timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    date DATE NOT NULL,
+    INDEX idx_user (user_id),
+    INDEX idx_score (score DESC),
+    INDEX idx_user_score (user_id, score DESC),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```
 
-### Leaderboard Table
-```javascript
-{
-  id: string,          // Unique score ID
-  userId: string,      // Reference to user
-  name: string,        // Player name
-  strand: string,      // Player's strand
-  email: string,       // Player's email
-  score: number,       // Final score
-  lines: number,       // Lines cleared
-  level: number,       // Level reached
-  difficulty: string,  // Last difficulty (easy/medium/hard)
-  timestamp: string,   // ISO timestamp
-  date: string         // Local date string
-}
+### Important Notes About Leaderboard
+
+The leaderboard maintains **ONLY ONE entry per user** - the highest score. When a user submits a new score:
+- If higher than current high score → Updates the existing entry
+- If lower → Score is not added (only highest score is kept)
+
+This is enforced by the API and can also be cleaned up using:
+
+```sql
+-- Clean up duplicate entries (keeps only highest score per user)
+DELETE l1 FROM leaderboard l1
+INNER JOIN leaderboard l2
+WHERE l1.user_id = l2.user_id
+AND l1.score < l2.score
+AND l1.id != l2.id;
 ```
 
-### Session Management
-```javascript
-{
-  email: string,       // Current user's email
-  loginTime: string    // Login timestamp
-}
+## Database Configuration
+
+Edit `api/config.php` to configure your database connection:
+
+```php
+define('DB_HOST', 'localhost');     // Database host
+define('DB_NAME', 'block_puzzle_game');  // Database name
+define('DB_USER', 'root');           // Database username
+define('DB_PASS', '');               // Database password
+define('DB_CHARSET', 'utf8mb4');     // Character set
 ```
 
-## Database Operations
+## API Endpoints
 
-### Users
-- `DB.users.getAll()` - Get all users
-- `DB.users.findByEmail(email)` - Find user by email
-- `DB.users.create(userData)` - Create new user
-- `DB.users.update(email, updates)` - Update user data
+### Users API (`api/users.php`)
 
-### Leaderboard
-- `DB.leaderboard.getAll()` - Get all scores
-- `DB.leaderboard.getTop(limit)` - Get top N scores
-- `DB.leaderboard.add(scoreData)` - Add new score
+| Method | Action | Parameters | Description |
+|--------|--------|------------|-------------|
+| GET | `findByEmail` | `email` | Find user by email |
+| GET | `getAll` | - | Get all users |
+| GET | `current` | `session_token` | Get current user from session |
+| POST | `create` | `name`, `strand`, `email` | Create new user account |
+| POST | `login` | `email` | Login with email |
+| PUT | - | `email`, `session_token`, fields to update | Update user data |
+| DELETE | - | `session_token` | Logout |
 
-### Session
-- `DB.session.set(user)` - Set current session
-- `DB.session.get()` - Get current session
-- `DB.session.clear()` - Clear session (logout)
+### Leaderboard API (`api/leaderboard.php`)
+
+| Method | Action | Parameters | Description |
+|--------|--------|------------|-------------|
+| GET | `getTop` | `limit` (optional, default 10) | Get top scores (1 per user) |
+| GET | `getAll` | - | Get all scores (1 per user) |
+| GET | `getByUser` | `user_id` | Get user's high score |
+| POST | - | `user_id`, `name`, `strand`, `email`, `score`, `lines`, `level`, `difficulty`, `session_token` | Submit score |
+| DELETE | - | `score_id`, `session_token` | Delete own score |
+| PUT | `cleanup` | - | Clean up duplicate entries |
+
+### Session API (`api/session.php`)
+
+| Method | Action | Parameters | Description |
+|--------|--------|------------|-------------|
+| GET | - | `session_token` | Validate session |
+| PUT | - | `session_token` | Refresh session expiry |
+| DELETE | - | `session_token` | Logout/destroy session |
 
 ## How to Use
 
-1. **Setup**: Place all files in the same directory
-2. **Start**: Open `Login.html` in a web browser
-3. **Create Account**: Use the signup tab with a Gmail address
-4. **Play**: Navigate through the menu to start playing
-
-## Converting to Real Database
-
-To convert from localStorage to a real database (Firebase, Supabase, MongoDB):
-
-1. Replace `Database.js` with your database SDK
-2. Implement the same API structure (DB.users, DB.leaderboard, DB.session)
-3. Replace localStorage calls with actual database queries
-4. Add proper error handling and validation
-5. Implement authentication (Firebase Auth, Supabase Auth, etc.)
-
-### Example Firebase Structure
-
-```javascript
-// Firebase implementation example
-const DB = {
-  users: {
-    async create(userData) {
-      const docRef = await addDoc(collection(db, 'users'), userData);
-      return { id: docRef.id, ...userData };
-    },
-    async findByEmail(email) {
-      const q = query(collection(db, 'users'), where('email', '==', email));
-      const snapshot = await getDocs(q);
-      return snapshot.docs[0]?.data();
-    }
-  }
-  // ... etc
-}
-```
+1. **Setup Database**: Run the SQL commands above in your MySQL database
+2. **Configure**: Edit `api/config.php` with your database credentials
+3. **Start Server**: Use a PHP-enabled server (XAMPP, WAMP, or built-in PHP server)
+   ```bash
+   cd /path/to/project
+   php -S localhost:8000
+   ```
+4. **Access**: Open `http://localhost:8000/Login.html` in your browser
 
 ## Features
 
 ### Authentication
-- Email-based login/signup
-- Gmail validation
-- Session persistence
-- Auto-login on return visit
+- Email-based signup/login
+- Session-based authentication (7-day expiry)
+- Automatic session validation
+
+### Leaderboard
+- Only highest score per user is displayed
+- Real-time score updates
+- Ranked by score (highest first)
 
 ### Game Mechanics
-- Classic gameplay
+- Classic block puzzle gameplay
 - Progressive difficulty quiz system
 - Timer-based questions
-- Score tracking and leaderboard
-- Ghost piece preview
-- Hard drop scoring
+- Score tracking and persistence
 
-### Quiz System
-- Three difficulty levels (Easy, Medium, Hard)
-- Progressive difficulty based on correct answers
-- Time limits per difficulty
-- Immediate feedback
-- Game over on wrong answer or timeout
+## Troubleshooting
 
-## Styling
+### "Database connection failed"
+- Check database credentials in `api/config.php`
+- Ensure MySQL server is running
+- Verify database exists
 
-All CSS uses CSS custom properties (variables) for easy theming:
+### "Session expired or invalid"
+- Clear browser cookies and localStorage
+- Log in again
 
-```css
-:root {
-  --bg-deep: #0a0a1a;
-  --neon-cyan: #00f0ff;
-  --neon-pink: #ff2d95;
-  /* ... etc */
-}
-```
+### API returns 404
+- Ensure URL rewriting is enabled (for clean URLs)
+- Or access via `api/users.php?action=...`
 
-## Browser Compatibility
+## Security Considerations
 
-- Modern browsers (Chrome, Firefox, Safari, Edge)
-- Requires localStorage support
-- Requires ES6+ JavaScript support
-- Responsive design for mobile and desktop
+1. **Password Hashing**: In production, add password authentication
+2. **HTTPS**: Use SSL/TLS in production
+3. **Input Validation**: All inputs are validated in the API
+4. **Session Security**: Session tokens are cryptographically secure random bytes
+5. **SQL Injection**: Uses prepared statements (PDO)
 
 ## Future Enhancements
 
-1. Add email verification
-2. Implement password authentication
+1. Add password authentication with bcrypt
+2. Implement email verification
 3. Add social login (Google OAuth)
-4. Real-time leaderboard updates
+4. Real-time leaderboard with WebSocket
 5. User profiles and statistics
-6. Multiplayer mode
-7. Power-ups and special blocks
-8. Achievement system
-9. Custom quiz categories
-10. Mobile touch controls
+6. Achievement system
+7. Multiplayer mode

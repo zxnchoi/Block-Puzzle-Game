@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Block Puzzle Game</title>
+<title>Block Puzzle Game - Homepage</title>
 <link rel="stylesheet" href="style.css">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
@@ -22,7 +22,7 @@
   <div class="home-content">
     <div class="home-title">
       <span class="t1">Block Puzzle</span>
-      <span class="t2">Game!!</span>
+      <span class="t2">Game!</span>
     </div>
     <div class="home-welcome" id="home-welcome">Welcome, Player!</div>
     <div class="home-tagline">Clear lines · Answer questions · Survive</div>
@@ -33,7 +33,7 @@
       <button class="nav-btn red" onclick="logout()">⏏ &nbsp;Logout</button>
     </div>
   </div>
-  <div class="home-deco"></div>
+  <div class="home-deco">© Copyright 2026 Block Puzzle Game — Test your mind and enjoy the game!</div>
 </div>
 
 <!-- HOW TO PLAY MODAL -->
@@ -49,9 +49,9 @@
     <div class="htp-section">
       <div class="htp-section-title">Controls</div>
       <div class="key-grid">
-        <div class="key-row"><span class="key-badge">← →</span><span class="key-label">Move left / right</span></div>
-        <div class="key-row"><span class="key-badge">↑</span><span class="key-label">Rotate piece</span></div>
-        <div class="key-row"><span class="key-badge">↓</span><span class="key-label">Soft drop</span></div>
+        <div class="key-row"><span class="key-badge">&larr; &rarr;</span><span class="key-label">Move left / right</span></div>
+        <div class="key-row"><span class="key-badge">&uarr;</span><span class="key-label">Rotate piece</span></div>
+        <div class="key-row"><span class="key-badge">&darr;</span><span class="key-label">Soft drop</span></div>
         <div class="key-row"><span class="key-badge">Space</span><span class="key-label">Hard drop</span></div>
       </div>
     </div>
@@ -70,6 +70,18 @@
     <div class="htp-section">
       <div class="htp-section-title">Scoring</div>
       <div class="htp-text">1 line = 100 pts · 2 lines = 300 pts · 3 lines = 500 pts · 4 lines = 800 pts (×level). Correct quiz answers award a bonus of 50 points. Hard drops give 2 pts per row fallen.</div>
+    </div>
+  </div>
+</div>
+
+<!-- LOGOUT MODAL -->
+<div class="modal-overlay" id="logout-overlay">
+  <div class="logout-modal">
+    <div class="modal-title">Logout</div>
+    <div class="htp-text">Are you sure you want to logout?</div>
+    <div class="modal-actions">
+      <button class="nav-btn red" onclick="confirmLogout()">Yes, Logout</button>
+      <button class="nav-btn" onclick="closeLogoutConfirm()">Cancel</button>
     </div>
   </div>
 </div>

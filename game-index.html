@@ -3,24 +3,18 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Block Puzzle Game</title>
+<title>Block Puzzle Game - Gamepage</title>
 <link rel="stylesheet" href="game-style.css">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
 <div class="grid-bg"></div>
 
-<!-- Loading Overlay -->
-<div class="loading-overlay" id="loading-overlay">
-  <div class="loading-spinner"></div>
-  <div class="loading-text">Loading...</div>
-</div>
-
 <!-- GAME SCREEN -->
 <div class="screen active" id="game-screen">
   <div class="game-wrapper">
     <div style="display:flex;justify-content:space-between;width:100%;max-width:590px;align-items:center">
-      <div class="game-title">BLOCK PUZZLE <span>GAME!!</span></div>
+      <div class="game-title">BLOCK PUZZLE <span>GAME!</span></div>
       <button class="btn-home" onclick="goToHome()">⏎ Home</button>
     </div>
     <div class="game-row">
@@ -89,7 +83,7 @@
           <circle class="timer-ring-bg" cx="21" cy="21" r="18"/>
           <circle class="timer-ring-fg" id="timer-ring-fg" cx="21" cy="21" r="18" stroke-dasharray="113.1" stroke-dashoffset="0"/>
         </svg>
-        <div class="timer-ring-text" id="timer-ring-text">30</div>
+        <div class="timer-ring-text" id="timer-ring-text">10</div>
       </div>
     </div>
     <div class="quiz-question" id="quiz-question"></div>
@@ -100,5 +94,17 @@
 
 <script src="Database.js"></script>
 <script src="game-script.js"></script>
+<!-- HOME CONFIRMATION MODAL -->
+<div class="modal-overlay hidden" id="home-overlay">
+  <div class="home-modal">
+    <div class="modal-title">Exit Game</div>
+    <div class="htp-text">Are you sure you want to exit to home? Your current progress will be lost.</div>
+    <div class="modal-actions">
+      <button class="nav-btn" onclick="confirmGoToHome()">Yes, Exit</button>
+      <button class="nav-btn red" onclick="closeHomeConfirm()">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
